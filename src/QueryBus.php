@@ -7,6 +7,8 @@ use Loxodonta\QueryBus\Exception\QueryHasNoHandlerException;
 use Loxodonta\QueryBus\Signature\QueryBusHandlerInterface;
 use Loxodonta\QueryBus\Signature\QueryBusInterface;
 use Loxodonta\QueryBus\Signature\QueryBusMiddlewareInterface;
+use Loxodonta\QueryBus\Signature\QueryInterface;
+use Loxodonta\QueryBus\Signature\QueryResponseInterface;
 
 /**
  * Class QueryBus
@@ -45,7 +47,7 @@ class QueryBus implements QueryBusInterface
     /**
      * @inheritDoc
      */
-    public function dispatch($query)
+    public function dispatch(QueryInterface $query): QueryResponseInterface
     {
         $key = get_class($query);
         if ($this->hasHandlerFor($key)) {
@@ -59,7 +61,7 @@ class QueryBus implements QueryBusInterface
         }
 
         throw new QueryHasNoHandlerException(
-            sprintf('%s command has no handler', $key)
+            sprintf('%s query has no handler', $key)
         );
     }
 

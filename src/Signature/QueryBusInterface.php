@@ -27,12 +27,12 @@ interface QueryBusInterface
     public function registerMiddleware(QueryBusMiddlewareInterface $middleware): QueryBusInterface;
 
     /**
-     * @param $query
+     * @param QueryInterface $query
      *
-     * @return mixed
+     * @return QueryResponseInterface
      * @throws QueryHasNoHandlerException
      */
-    public function dispatch($query);
+    public function dispatch(QueryInterface $query): QueryResponseInterface;
 
     /**
      * @param string $className

@@ -8,15 +8,28 @@ use Loxodonta\QueryBus\Signature\QueryBusMiddlewareInterface;
 
 class AnotherMiddleware implements QueryBusMiddlewareInterface
 {
+    /**
+     * @var Spy
+     */
+    private $spy;
 
+    /**
+     * SimpleMiddleware constructor.
+     *
+     * @param Spy $spy
+     */
+    public function __construct(Spy $spy)
+    {
+        $this->spy = $spy;
+    }
     /**
      * @inheritDoc
      */
     public function dispatch($query, callable $next)
     {
-        $query->var = sprintf('%s and modified again', $query->var);
+        $this->spy->report();
         $result = $next($query);
-        $query->var = $query->var . ' and again';
+        $this->spy->report();
         return $result;
     }
 }

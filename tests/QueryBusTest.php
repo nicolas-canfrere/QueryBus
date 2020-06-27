@@ -4,6 +4,7 @@
 namespace Loxodonta\QueryBus\Tests;
 
 
+use Loxodonta\QueryBus\Tests\Fake\Spy;
 use Loxodonta\QueryBus\Exception\QueryHandlerNotCallableException;
 use Loxodonta\QueryBus\Exception\QueryHasNoHandlerException;
 use Loxodonta\QueryBus\QueryBus;
@@ -69,7 +70,7 @@ class QueryBusTest extends TestCase
 
         $result = $qb->dispatch(new SimpleQuery());
 
-        $this->assertEquals(SimpleQuery::class, $result);
+        $this->assertEquals(SimpleQuery::class, $result->getValue());
     }
 
     /**
@@ -102,22 +103,19 @@ class QueryBusTest extends TestCase
     public function withOneMiddleware()
     {
         $qb = new QueryBus();
-        $mw = new SimpleMiddleware();
+        $spy = $this->mockMiddlewareSpy();
+        $spy->expects($this->atLeastOnce())->method('report');
+        $mw = new SimpleMiddleware($spy);
         $handler = new SimpleQueryBusHandler();
 
         $qb->registerMiddleware($mw);
         $qb->registerHandler($handler);
 
         $query = new SimpleQuery();
-        $initial = $query->var;
 
         $result = $qb->dispatch($query);
 
-        $this->assertEquals(SimpleQuery::class, $result);
-
-        // for test only, middlewares are not suppose to alter the command object !
-
-        $this->assertEquals(sprintf('%s modified', $initial), $query->var);
+        $this->assertEquals(SimpleQuery::class, $result->getValue());
     }
 
     /**
@@ -126,26 +124,28 @@ class QueryBusTest extends TestCase
     public function withMultipleMiddlewares()
     {
         $qb = new QueryBus();
-        $amw = new AnotherMiddleware();
-        $mw = new SimpleMiddleware();
+        $spyOne = $this->mockMiddlewareSpy();
+        $spyOne->expects($this->once())->method('report');
+        $mw = new SimpleMiddleware($spyOne);
+        $spyTwo = $this->mockMiddlewareSpy();
+        $spyTwo->expects($this->exactly(2))->method('report');
+        $amw = new AnotherMiddleware($spyTwo);
         $handler = new SimpleQueryBusHandler();
 
-        $qb->registerMiddleware($amw);
-        $qb->registerMiddleware($mw);
+        $qb->registerMiddleware($amw)->registerMiddleware($mw);
         $qb->registerHandler($handler);
 
         $query = new SimpleQuery();
-        $initial = $query->var;
 
         $result = $qb->dispatch($query);
 
-        $this->assertEquals(SimpleQuery::class, $result);
-
-        $expected = sprintf(
-            '%s and modified again and again',
-            sprintf('%s modified', $initial)
-        );
-
-        $this->assertEquals($expected, $query->var);
+        $this->assertEquals(SimpleQuery::class, $result->getValue());
     }
+    private function mockMiddlewareSpy()
+    {
+        return
+            $this->getMockBuilder(Spy::class)
+                 ->onlyMethods(['report'])->getMock();
+    }
+
 }
